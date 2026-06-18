@@ -1,0 +1,58 @@
+name: Create GitHub Release from CHANGELOG
+
+# Trigger: push a tag like v1.2.0 or v2.0.0-beta.1
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract changelog entry for this version
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          # Pull the content between ## [VERSION] and the next ## [ section
+          NOTES=$(awk "
+            /^## \[$VERSION\]/ { found=1; next }
+            found && /^## \[/  { exit }
+            found              { print }
+          " CHANGELOG.md | sed '/^[[:space:]]*$/d' | head -100)
+
+          if [ -z "$NOTES" ]; then
+            NOTES="See [CHANGELOG.md](CHANGELOG.md) for details."
+          fi
+
+          # Write multiline output safely
+          {
+            echo "notes<<CHANGELOG_EOF"
+            printf '%s\n' "$NOTES"
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag     = context.ref.replace('refs/tags/', '');
+            const version = '${{ steps.changelog.outputs.version }}';
+            const notes   = `${{ steps.changelog.outputs.notes }}`;
+
+            await github.rest.repos.createRelease({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              tag_name:   tag,
+              name:       `v${version}`,
+              body:       notes,
+              draft:      false,
+              prerelease: tag.includes('-'),
+            });

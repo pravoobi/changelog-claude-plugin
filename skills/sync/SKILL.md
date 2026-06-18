@@ -8,7 +8,24 @@ Trigger an immediate changelog update based on staged changes and the current wo
 
 ## Steps
 
-### 1. Verify prerequisites
+### 1. Validate config
+
+Read `.changelog/config.json` if it exists and check for invalid values. Warn the
+user (but do not stop) if any of the following are wrong:
+
+| Key | Valid values |
+|---|---|
+| `mode` | `"stop"`, `"session-end"`, `"manual"` |
+| `source` | `"diff"`, `"commits"`, `"both"` |
+| `threshold` | positive integer |
+| `sessionEndIdleMinutes` | positive integer |
+| `ignore` | array of strings |
+
+Example warning: `⚠ config.json: "mode" is "auto" — not a valid value. Expected one of: stop, session-end, manual. Defaulting to "stop".`
+
+Continue with defaults for any invalid field rather than aborting.
+
+### 2. Verify prerequisites
 
 Check that `CHANGELOG.md` exists and contains the auto-markers:
 ```

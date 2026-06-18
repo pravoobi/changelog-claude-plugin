@@ -93,3 +93,15 @@ Tell the user:
 - The version and date that were cut
 - How many entries moved into the new section
 - That `/changelog:undo` can revert this if needed
+- Suggested next steps:
+  ```
+  git add CHANGELOG.md && git commit -m "chore: release v<version>"
+  git tag v<version>
+  git push && git push --tags
+  ```
+  If this is a Claude Code **plugin** project (has `.claude-plugin/plugin.json`), also suggest:
+  ```
+  claude plugin tag
+  ```
+  This creates a properly named `changelog--v<version>` git tag that marketplace
+  tooling uses to identify plugin releases.

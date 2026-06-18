@@ -20,9 +20,20 @@ Read `.changelog/config.json`. Show:
 - `mode` (default: stop)
 - `source` (default: diff)
 - `threshold` (default: 1)
+- `sessionEndIdleMinutes` (default: 10, only relevant when mode is session-end)
 - Number of ignore patterns
 
 If config file is missing, show defaults and note it hasn't been initialized.
+
+**Validate each field and flag issues:**
+
+| Key | Valid values | If invalid |
+|---|---|---|
+| `mode` | `stop`, `session-end`, `manual` | ⚠ warn, hooks will default to "stop" |
+| `source` | `diff`, `commits`, `both` | ⚠ warn, writer will default to "diff" |
+| `threshold` | positive integer | ⚠ warn, will default to 1 |
+| `sessionEndIdleMinutes` | positive integer | ⚠ warn, will default to 10 |
+| `ignore` | array of strings | ⚠ warn if not an array |
 
 ### 3. Auto-write readiness
 

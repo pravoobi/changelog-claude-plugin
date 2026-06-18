@@ -115,6 +115,41 @@ Anything outside the markers is yours — the plugin never modifies it.
 
 ---
 
+## GitHub Actions — auto-create releases
+
+Copy `.github/workflows/release.yml` from this repo into your project. When you push
+a `v*` tag, it extracts the matching version section from `CHANGELOG.md` and creates
+a GitHub Release with that content automatically.
+
+**Workflow:**
+
+```bash
+/changelog:release 1.2.0          # promotes [Unreleased] → [1.2.0] in CHANGELOG.md
+git add CHANGELOG.md
+git commit -m "chore: release v1.2.0"
+git tag v1.2.0
+git push && git push --tags        # triggers the GitHub Actions workflow
+```
+
+The release notes in GitHub will match exactly what's in your CHANGELOG.md.
+
+---
+
+## Plugin maintainers — tagging releases
+
+If you're maintaining a Claude Code plugin (has `.claude-plugin/plugin.json`), use the
+built-in tag command instead of a plain `git tag`:
+
+```bash
+claude plugin tag
+```
+
+This creates a `<name>--v<version>` tag (e.g. `changelog--v0.3.0`) that marketplace
+tooling uses to identify plugin versions. Run it after bumping `"version"` in
+`plugin.json` and committing.
+
+---
+
 ## Runtime files
 
 These live in `.changelog/` inside your repo (add to `.gitignore`):
@@ -123,7 +158,8 @@ These live in `.changelog/` inside your repo (add to `.gitignore`):
 |---|---|
 | `config.json` | Plugin settings |
 | `.staged.jsonl` | Files changed this session (cleared after each write) |
-| `backups/CHANGELOG.md.bak` | Pre-write backup for `/changelog:undo` |
+| `writer.log` | Output from the last background writer run (for diagnosing failures) |
+| `backups/` | Timestamped CHANGELOG.md backups for `/changelog:undo` |
 
 ---
 
