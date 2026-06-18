@@ -49,7 +49,7 @@ STAGED_FILE="${REPO_ROOT}/.changelog/.staged.jsonl"
 CONFIG_FILE="${REPO_ROOT}/.changelog/config.json"
 
 # ---------------------------------------------------------------------------
-# Built-in skip rules (no jq needed)
+# Built-in skip rules
 # ---------------------------------------------------------------------------
 # Skip CHANGELOG.md itself
 case "$(basename "$FILE")" in
@@ -68,27 +68,65 @@ case "$FILE" in
 esac
 
 # ---------------------------------------------------------------------------
+# Skip binary and generated files by extension
+# ---------------------------------------------------------------------------
+case "$FILE" in
+  # Images
+  *.png|*.jpg|*.jpeg|*.gif|*.webp|*.svg|*.ico|*.bmp|*.tiff|*.tif) exit 0 ;;
+  # Video & audio
+  *.mp4|*.mov|*.avi|*.mkv|*.webm|*.mp3|*.wav|*.ogg|*.flac|*.aac) exit 0 ;;
+  # Archives & compiled
+  *.zip|*.tar|*.gz|*.bz2|*.xz|*.7z|*.rar|*.jar|*.war|*.ear) exit 0 ;;
+  *.exe|*.dll|*.so|*.dylib|*.o|*.a|*.bin|*.wasm|*.pyc|*.class) exit 0 ;;
+  # Documents (binary formats)
+  *.pdf|*.docx|*.xlsx|*.pptx|*.doc|*.xls|*.ppt) exit 0 ;;
+  # Fonts
+  *.ttf|*.woff|*.woff2|*.otf|*.eot) exit 0 ;;
+  # Minified & source maps
+  *.min.js|*.min.css|*.map) exit 0 ;;
+esac
+
+# ---------------------------------------------------------------------------
 # User-configured ignore globs from config.json
+# Uses node for proper ** glob support; falls back to bash case matching
 # ---------------------------------------------------------------------------
 if [ -f "$CONFIG_FILE" ]; then
-  if command -v jq >/dev/null 2>&1; then
-    IGNORE_PATTERNS=$(jq -r '.ignore // [] | .[]' "$CONFIG_FILE" 2>/dev/null) || true
-  elif command -v node >/dev/null 2>&1; then
-    IGNORE_PATTERNS=$(node -e "
-      const fs=require('fs');
+  if command -v node >/dev/null 2>&1; then
+    SHOULD_IGNORE=$(FILE="$FILE" node -e "
+      const fs = require('fs');
       try {
-        const c=JSON.parse(fs.readFileSync('$CONFIG_FILE','utf8'));
-        (c.ignore||[]).forEach(p=>console.log(p));
-      } catch(e) {}
-    " 2>/dev/null) || true
-  fi
-  if [ -n "${IGNORE_PATTERNS:-}" ]; then
-    while IFS= read -r pattern; do
-      [ -z "$pattern" ] && continue
-      case "$FILE" in
-        $pattern) exit 0 ;;
-      esac
-    done <<< "$IGNORE_PATTERNS"
+        const config = JSON.parse(fs.readFileSync('$(printf '%s' "$CONFIG_FILE" | sed "s/'/'\\\\''/g")', 'utf8'));
+        const file = process.env.FILE || '';
+        const patterns = config.ignore || [];
+        const match = patterns.some(pattern => {
+          // Convert glob pattern to regex (supports **)
+          const re = pattern
+            .replace(/[.+^${}()|[\]\\]/g, '\\$&')  // escape regex specials except * and ?
+            .replace(/\\\*/g, '*')                   // unescape * for next steps
+            .replace(/\*\*/g, '\x00')               // placeholder for **
+            .replace(/\*/g,   '[^/]*')              // * matches within a segment
+            .replace(/\x00/g, '.*')                 // ** matches across segments
+            .replace(/\?/g,   '[^/]');              // ? matches one char
+          return new RegExp('(^|/)' + re + '(\$|/)').test(file) ||
+                 new RegExp('^' + re + '\$').test(file);
+        });
+        process.stdout.write(match ? 'yes' : 'no');
+      } catch(e) { process.stdout.write('no'); }
+    " 2>/dev/null) || SHOULD_IGNORE="no"
+    if [ "$SHOULD_IGNORE" = "yes" ]; then
+      exit 0
+    fi
+  elif command -v jq >/dev/null 2>&1; then
+    # jq available but no node: fall back to basic bash case matching
+    IGNORE_PATTERNS=$(jq -r '.ignore // [] | .[]' "$CONFIG_FILE" 2>/dev/null) || true
+    if [ -n "${IGNORE_PATTERNS:-}" ]; then
+      while IFS= read -r pattern; do
+        [ -z "$pattern" ] && continue
+        case "$FILE" in
+          $pattern) exit 0 ;;
+        esac
+      done <<< "$IGNORE_PATTERNS"
+    fi
   fi
 fi
 
@@ -104,13 +142,12 @@ if command -v jq >/dev/null 2>&1; then
 elif command -v node >/dev/null 2>&1; then
   FILE="$FILE" TOOL="$TOOL" TS="$TS" node -e "
     process.stdout.write(JSON.stringify({
-      file:  process.env.FILE,
-      tool:  process.env.TOOL,
-      ts:    process.env.TS
+      file: process.env.FILE,
+      tool: process.env.TOOL,
+      ts:   process.env.TS
     }) + '\n');
   " >> "$STAGED_FILE" 2>/dev/null || true
 else
-  # Plain fallback — safe for ASCII paths
   printf '{"file":"%s","tool":"%s","ts":"%s"}\n' \
     "$(printf '%s' "$FILE" | sed 's/\\/\\\\/g;s/"/\\"/g')" \
     "$TOOL" "$TS" >> "$STAGED_FILE"

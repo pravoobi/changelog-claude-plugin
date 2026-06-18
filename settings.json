@@ -2,6 +2,7 @@
   "mode": "stop",
   "source": "diff",
   "threshold": 1,
+  "sessionEndIdleMinutes": 10,
   "ignore": [
     "**/node_modules/**",
     "**/dist/**",

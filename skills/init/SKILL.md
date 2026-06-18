@@ -44,6 +44,7 @@ Create `.changelog/config.json` with these defaults (do not overwrite if it alre
   "mode": "stop",
   "source": "diff",
   "threshold": 1,
+  "sessionEndIdleMinutes": 10,
   "ignore": [
     "**/node_modules/**",
     "**/dist/**",

@@ -1,6 +1,6 @@
 {
   "name": "changelog",
   "description": "Keeps a human-facing CHANGELOG.md in sync with code changes, using an isolated writer so it never spends your main session context.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": { "name": "pravubi@gmail.com" }
 }
