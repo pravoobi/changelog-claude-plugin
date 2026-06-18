@@ -34,10 +34,18 @@ Extract all content within `## [Unreleased]` (both inside and outside the auto-m
 If `## [Unreleased]` has no entries (the auto block is empty and there's no manual prose),
 warn the user that there is nothing to release, then stop.
 
-### 3. Back up
+### 3. Back up (with rotation)
 
-Copy the current `CHANGELOG.md` content to `.changelog/backups/CHANGELOG.md.bak`
-(create the `backups/` directory if needed). This enables `/changelog:undo`.
+Create `.changelog/backups/` if it doesn't exist.
+
+Write the current `CHANGELOG.md` content to a timestamped backup file:
+`.changelog/backups/CHANGELOG.md.<YYYY-MM-DDTHH-MM-SSZ>.bak`
+(use today's UTC datetime; replace colons with hyphens so the filename is safe on all OSes)
+
+Then check how many `.bak` files exist in `.changelog/backups/`. If more than 5,
+delete the oldest ones (by filename, which sorts chronologically) so only 5 remain.
+
+This enables `/changelog:undo` to restore from any of the last 5 backups.
 
 ### 4. Write the new release section
 

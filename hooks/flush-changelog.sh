@@ -81,10 +81,15 @@ fi
 
 # ---------------------------------------------------------------------------
 # All guards passed — launch isolated writer in background
-# CHANGELOG_PLUGIN_DISABLE prevents the writer's own edits from re-staging
+# Output goes to .changelog/writer.log so failures are diagnosable
 # ---------------------------------------------------------------------------
-CHANGELOG_PLUGIN_DISABLE=1 claude -p "$(cat "${CLAUDE_PLUGIN_ROOT}/scripts/writer-prompt.md")" \
-  --allowedTools "Read,Edit,Write,Bash(git diff:*),Bash(git log:*),Bash(git status:*)" \
-  >/dev/null 2>&1 &
+LOG_FILE="${REPO_ROOT}/.changelog/writer.log"
+mkdir -p "${REPO_ROOT}/.changelog"
+
+{
+  echo "=== $(date -u +"%Y-%m-%dT%H:%M:%SZ") staged:${STAGED_COUNT} ==="
+  CHANGELOG_PLUGIN_DISABLE=1 claude -p "$(cat "${CLAUDE_PLUGIN_ROOT}/scripts/writer-prompt.md")" \
+    --allowedTools "Read,Edit,Write,Bash(git diff:*),Bash(git log:*),Bash(git status:*)"
+} >> "$LOG_FILE" 2>&1 &
 
 exit 0

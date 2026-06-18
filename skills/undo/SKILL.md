@@ -1,36 +1,50 @@
 ---
-description: Undo the last automatic changelog write — restores CHANGELOG.md from the backup created before the last auto-update or release.
+description: Undo the last automatic changelog write or release — lists available backups and restores the one you choose.
 ---
 
 # /changelog:undo
 
-Revert `CHANGELOG.md` to the state it was in before the last automatic write or release.
+Revert `CHANGELOG.md` to a previous state using a backup from `.changelog/backups/`.
 
 ## Steps
 
-### 1. Check for backup
+### 1. List available backups
 
-Check whether `.changelog/backups/CHANGELOG.md.bak` exists.
+Read all files matching `.changelog/backups/CHANGELOG.md.*.bak`, sorted newest first.
 
-If not, tell the user there is no backup to restore and stop.
+If no backups exist, tell the user there is nothing to restore and stop.
 
-### 2. Show the diff
+### 2. Show options
 
-Read both the current `CHANGELOG.md` and the backup `.changelog/backups/CHANGELOG.md.bak`.
+Display the backups with their timestamps so the user can identify which to restore:
 
-Show the user a summary of what will be reverted (what entries would be removed).
+```
+Available backups (newest first):
+  1. CHANGELOG.md.2026-06-18T09-30-00Z.bak  (most recent — last auto-write)
+  2. CHANGELOG.md.2026-06-18T08-15-00Z.bak
+  3. CHANGELOG.md.2026-06-17T17-45-00Z.bak
+```
 
-Ask: "Restore CHANGELOG.md from backup? This will undo the last auto-write or release."
+If there is only one backup, skip the selection step and confirm directly:
+"Restore from the only available backup (CHANGELOG.md.2026-06-18T09-30-00Z.bak)?"
 
-If the user says no, stop without changing anything.
+### 3. Confirm
 
-### 3. Restore
+Ask the user which backup to restore (default: the most recent one).
+Show a brief summary of what will be reverted — specifically what entries will be removed
+or changed compared to the current CHANGELOG.md.
 
-Copy the backup content back to `CHANGELOG.md` (overwrite the current file).
+If the user says no or cancels, stop without changing anything.
 
-Remove `.changelog/backups/CHANGELOG.md.bak` after a successful restore.
+### 4. Restore
 
-### 4. Report
+Overwrite `CHANGELOG.md` with the chosen backup's content.
 
-Tell the user that `CHANGELOG.md` has been restored. Let them know that if they want
-to redo the write, they can run `/changelog:sync`.
+Do NOT delete the backup files after restoring — the user may want to redo or pick
+a different backup. Let them manage cleanup manually.
+
+### 5. Report
+
+Confirm which backup was restored and remind the user that:
+- `/changelog:sync` will re-generate entries from the current git diff
+- Other backups are still available in `.changelog/backups/` if needed
