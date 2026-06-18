@@ -1,6 +1,9 @@
 # Runtime files created in users' repos — not part of the plugin itself
 .changelog/
 
+# Local Claude Code settings — machine-specific, never commit
+.claude/settings.local.json
+
 # OS
 .DS_Store
 Thumbs.db

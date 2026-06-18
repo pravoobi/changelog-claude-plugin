@@ -1,5 +1,5 @@
 ---
-description: Cut a release — promotes all [Unreleased] entries to a new dated version section. Usage: /changelog:release <version> [date]
+description: "Cut a release — promotes all [Unreleased] entries to a new dated version section. Usage: /changelog:release <version> [date]"
 ---
 
 # /changelog:release
