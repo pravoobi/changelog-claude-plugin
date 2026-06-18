@@ -1,0 +1,11 @@
+# Runtime files created in users' repos — not part of the plugin itself
+.changelog/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

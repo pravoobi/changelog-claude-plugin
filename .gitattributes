@@ -1,0 +1,5 @@
+# Ensure shell scripts always use LF — CRLF breaks bash on Linux/macOS
+*.sh    text eol=lf
+
+# Everything else: normalize on commit, checkout native
+*       text=auto

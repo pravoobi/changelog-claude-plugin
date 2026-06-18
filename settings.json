@@ -1,0 +1,18 @@
+{
+  "mode": "stop",
+  "source": "diff",
+  "threshold": 1,
+  "ignore": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/.git/**",
+    "**/package-lock.json",
+    "**/yarn.lock",
+    "**/pnpm-lock.yaml",
+    "**/Cargo.lock",
+    "**/poetry.lock",
+    "**/*.lock"
+  ],
+  "categories": ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
+}
